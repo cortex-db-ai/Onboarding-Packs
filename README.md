@@ -59,8 +59,6 @@ Open [`01-self-host/`](01-self-host/) → `CORTEXDB_SETUP_GUIDE.md`.
 
 [`03-harness-attach/`](03-harness-attach/) — Claude Code (`~/.claude.json`), Claude Desktop (`claude_desktop_config.json`), Cursor, Grok Bot.
 
-Unified Brain product (separate): https://github.com/vipul-khatana/Unified-Brain-MVP
-
 ---
 
 ## Folder map
