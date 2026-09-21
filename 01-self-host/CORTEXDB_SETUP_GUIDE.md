@@ -22,7 +22,7 @@ or a person. If you are an **agent** following it:
    each command, then run that section's verify step before moving on.
 2. **Never handle the user's secrets in chat.** At §4, create `cortex.env` from
    `cortex.example.env`, then **pause and ask the user to paste their OpenAI key into
-   `cortex.env` themselves** (it appears on 5 lines — see §4). Do the same for connector
+   `cortex.env` themselves** (it appears on 5 to 7 lines — see §4). Do the same for connector
    tokens (§8). Do not print, echo, or commit these values.
 3. **Assume the user has done the prerequisites** (Docker running). If a command fails
    because a prerequisite is missing, say so and stop — don't work around it.
@@ -42,21 +42,27 @@ Four pieces on one Docker network (`cortexnet`):
 | Component | What it is | Runs as |
 |---|---|---|
 | **cortexdb** | The database + API server (`:3141`) | Docker container |
-| **ollama** | Local **embeddings** (`nomic-embed-text`) — free, private, no key | Docker container |
+| **ollama** | Local **embeddings** (`nomic-embed-text`) — **only if you choose embedding Option A** | Docker container |
 | **tika** | Apache Tika — extracts text from documents | Docker container |
 | **connectors** | `cortexdb-connectors` — pulls data from Slack/Jira/GitHub/Notion/etc. | Python on the host |
 
 **Model split** (the recommended trial config):
 - **LLM** — answer/reasoning/verifier run on **OpenAI** (`gpt-4o`) for the best output quality.
-- **Embeddings** — run **locally** on Ollama (`nomic-embed-text`), so vector data never leaves the box and costs nothing.
+- **Embeddings** — **your choice, made once in [§2](#2-choose-where-embeddings-run)**. Both options
+  are fully supported and behave identically from the API's point of view:
+  - **Option A — local Ollama** (`nomic-embed-text`): free per call, vectors never leave the box;
+    needs one more container and enough CPU/RAM to run the model.
+  - **Option B — OpenAI API** (`text-embedding-3-small`): no extra container or local model, reuses
+    the same OpenAI key as the LLM. **Choose B if your machine has modest hardware** (a laptop, no
+    GPU, limited RAM or disk) or you want the fewest moving parts.
 
 Images/audio/video ingestion also calls **OpenAI** (vision + Whisper); documents use Tika (no key).
-So a single OpenAI key powers the LLM **and** media; embeddings need no key.
+So a single OpenAI key powers the LLM **and** media, and with Option B the embeddings too.
 
-> **Zero-cost / fully-offline option:** you can run the LLM locally on Ollama too
-> (`qwen2.5:14b-instruct`) with no OpenAI key — answer quality is below gpt-4o, and the 14B
-> model (~9 GB) realistically needs a GPU. The env template includes this fallback block,
-> commented out.
+> **Zero-cost / fully-offline option:** with embedding Option A you can run the LLM locally on
+> Ollama too (`qwen2.5:14b-instruct`) with no OpenAI key — answer quality is below gpt-4o, and
+> the 14B model (~9 GB) realistically needs a GPU. The env template includes this fallback
+> block, commented out.
 
 **Optional features you can turn on later** (off by default; each is one env toggle — see
 [§9](#9-optional-features-code-plane--enrichment)):
@@ -77,10 +83,12 @@ So a single OpenAI key powers the LLM **and** media; embeddings need no key.
 | `cortexdb-cli` | `cortexdb` | Terminal CLI + REPL | [§11b](#11b-terminal-cli--cortexdb-cortexdb-cli) |
 
 **Prerequisites**
-- Docker Desktop (or Docker Engine) running. ~6 GB free disk for images + the embedding model.
+- Docker Desktop (or Docker Engine) running. Free disk: ~6 GB with embedding Option A (Ollama
+  image + model), ~2 GB with Option B (CortexDB + Tika images only).
 - Python 3.11+ on the host (needed for connectors, the SDK, or the CLIs).
-- An **OpenAI API key** — powers the LLM (answer/reasoning) and image/audio ingestion.
-  *(Skip it only if you use the fully-local fallback, where answer quality is lower.)*
+- An **OpenAI API key** — powers the LLM (answer/reasoning), image/audio ingestion, and (with
+  Option B) embeddings. *(Skip it only if you use the fully-local fallback, where answer
+  quality is lower.)*
 
 > This guide runs CortexDB in **enrichment-off / content-only mode** — it stores and indexes
 > what you give it and runs extraction (Tika/vision/Whisper), but does not run the extra
@@ -99,10 +107,30 @@ docker network create cortexnet
 
 ---
 
-## 2. Start Ollama and pull the embedding model
+## 2. Choose where embeddings run
 
-Ollama serves **embeddings** locally. (The LLM runs on OpenAI in the recommended config, so
-only the embedding model is needed here.)
+Every memory is embedded into a vector for recall. Pick **one** of the two options below;
+both are fully supported and produce the same product behaviour. You will activate the
+matching block in the env file in [§4](#4-create-your-env-file).
+
+| | **Option A — local Ollama** | **Option B — OpenAI API** |
+|---|---|---|
+| Model | `nomic-embed-text` (768 dims) | `text-embedding-3-small` (1536 dims) |
+| Extra pieces | One more container (`ollama`) + a 275 MB model download | None — same OpenAI key as the LLM |
+| Cost | Free per call | Fractions of a cent per 1k tokens embedded |
+| Privacy | Text to embed never leaves your machine | Text to embed is sent to OpenAI |
+| Hardware | Needs CPU/RAM headroom to run the model; a GPU is not required but small machines will feel it | Nothing local |
+| **Choose it when** | You want zero per-call cost or vectors must stay on the box, and the machine can spare the resources | **Your machine has modest hardware** (a laptop, no GPU, limited RAM or disk), or you want the fewest moving parts |
+
+> **Decide once, before the first write.** CortexDB pins the embedding model and its dimensions
+> to the data volume the first time it writes. Changing your mind later means the vector rebuild
+> in [§12](#12-upgrading), not just an env edit. Picking neither is an
+> error: v0.9.10+ refuses to boot without an embedding endpoint, and older images silently fall
+> back to mock embeddings (recall "works" but returns nonsense).
+
+### 2A. Option A — start Ollama and pull the embedding model
+
+Skip this subsection entirely if you chose Option B.
 
 ```bash
 docker run -d --name ollama --network cortexnet -p 11434:11434 \
@@ -128,6 +156,22 @@ You should see `nomic-embed-text`.
 > `docker exec ollama ollama pull qwen2.5:14b-instruct` here (~9 GB; a GPU is strongly
 > recommended — it's slow on CPU-only).
 
+### 2B. Option B — OpenAI API embeddings
+
+Nothing to start. The server calls `https://api.openai.com/v1/embeddings` directly with the
+model `text-embedding-3-small` (1536 dims), using the same OpenAI key you already need for
+the LLM. In [§4](#4-create-your-env-file) you will uncomment the `[B]` block in the env file;
+its two key placeholders are filled by the same `sed` as the rest. (Two key lines because
+v0.9.10+ reads `CORTEX_EMBEDDING_API_KEY` while older images read `OPENAI_API_KEY`; set both
+and it works on any tag. Verified on v0.9.8 and v0.9.13.)
+
+Two things to know:
+- Embedding traffic is small (one call per stored memory or recall query) and cheap, but it
+  **does** send the text of each memory to OpenAI. If that is not acceptable, use Option A.
+- If the OpenAI endpoint is unreachable or the key is bad, writes cannot be vector-indexed and
+  recall looks empty. The container log says so (`docker logs cortexdb`), and on v0.9.9+
+  `GET /v1/ready` reports it under `checks.embeddings`.
+
 ---
 
 ## 3. Start Tika (document extraction)
@@ -150,10 +194,16 @@ Copy the template and fill in the placeholders:
 cp cortex.example.env cortex.env
 ```
 
-Then edit `cortex.env` and replace **every** `<YOUR_OPENAI_API_KEY>` with your OpenAI key
-(`sk-...`). The same key appears on five lines — the LLM roles
-(`CORTEX_ANSWER_API_KEY`, `CORTEX_VERIFIER_API_KEY`, `CORTEX_ENTITY_API_KEY`) and media
-(`CORTEX_IMAGE_API_KEY`, `CORTEX_AUDIO_API_KEY`):
+Then edit `cortex.env` in two places:
+
+**(1) Activate the embedding option you chose in [§2](#2-choose-where-embeddings-run).** In the
+`--- Embeddings ---` block, remove the leading `#` from the four `[A]` lines (Ollama) **or** the
+six `[B]` lines (OpenAI). Exactly one block must be active.
+
+**(2) Replace every `<YOUR_OPENAI_API_KEY>`** with your OpenAI key (`sk-...`). It appears on
+five lines — the LLM roles (`CORTEX_ANSWER_API_KEY`, `CORTEX_VERIFIER_API_KEY`,
+`CORTEX_ENTITY_API_KEY`) and media (`CORTEX_IMAGE_API_KEY`, `CORTEX_AUDIO_API_KEY`) — plus two
+more, `CORTEX_EMBEDDING_API_KEY` and `OPENAI_API_KEY`, if you activated `[B]`:
 
 ```bash
 # quick fill-in (macOS/Linux): replace all placeholders in one shot
@@ -162,6 +212,10 @@ sed -i 's|<YOUR_OPENAI_API_KEY>|sk-your-real-key|g' cortex.env
 
 Everything else works as-is for a local trial. Prefer a different LLM provider, cheaper
 model, or no cloud at all? See the commented blocks in the template.
+
+Quick self-check before starting the server: `grep -c '^CORTEX_EMBEDDING_' cortex.env` should
+print `8` for Option A or `9` for Option B (your block plus the four batching/timeout lines
+further down). `4` means you activated neither block; `13` means both.
 
 > **Security:** `cortex.env` holds a live key once filled in. Do **not** commit it or
 > paste it into chat. Add it to `.gitignore`. The committed template is `cortex.example.env`.
@@ -182,7 +236,8 @@ The trailing `3141 /data` are the server's arguments (port + data dir) — keep 
 > **Windows / Git-Bash users:** prefix `docker run` with `MSYS_NO_PATHCONV=1` so Git-Bash
 > doesn't mangle the `/data` path, e.g. `MSYS_NO_PATHCONV=1 docker run ...`.
 
-Give it ~10–20 seconds to boot, then check all three are up:
+Give it ~10–20 seconds to boot, then check the containers are up (`cortexdb` + `tika`, plus
+`ollama` if you chose Option A):
 
 ```bash
 docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}'
@@ -235,8 +290,9 @@ four settings — only the flag/env name changes. This is the whole cheat-sheet:
 | **SDK** (`import cortexdb`) | `Cortex("http://127.0.0.1:3141")` | `bearer="…"` | `actor="…"` | 1st arg of each call |
 | **CLI** (`cortexdb`) | `--endpoint` / `CORTEXDB_URL` | `--api-key` / `CORTEXDB_API_KEY` | `--actor` / `CORTEXDB_ACTOR` | `-S` / `--scope` / `CORTEXDB_SCOPE` |
 
-> ⚠️ Both the connectors and the MCP/SDK/CLI default their base URL to **CortexDB Cloud**
-> (and the SDK to `localhost:3142`). Always set the base URL explicitly for a local trial.
+> ⚠️ The connectors, the MCP server and the CLI default their base URL to **CortexDB Cloud**
+> (`api-v1.cortexdb.ai`). The Python SDK defaults to `http://localhost:3141` (cortexdbai 0.11.0
+> and newer; versions up to 0.10.0 used `3142`). Always set the base URL explicitly for a local trial.
 
 ### 6c. Write one memory
 
@@ -767,7 +823,8 @@ python -m pip install --upgrade cortexdbai
 ```python
 from cortexdb import Cortex          # AsyncCortex is the asyncio equivalent
 
-# NOTE: the SDK's default api_url is http://localhost:3142 — pass 3141 explicitly.
+# NOTE: the SDK's default api_url is http://localhost:3141 (cortexdbai 0.11.0+; 3142 in older
+# versions). Pass the URL explicitly anyway so the target is never ambiguous.
 cx = Cortex("http://127.0.0.1:3141", actor="user:local", bearer="noauth-local")
 
 # Write (text is first-class; wait="indexed" blocks until queryable)
@@ -849,6 +906,16 @@ MSYS_NO_PATHCONV=1 docker run -d --name cortexdb --network cortexnet -p 3141:314
 
 Connectors: `python -m pip install --upgrade cortexdb-connectors`.
 
+**Switching embedding option after the first write (A ↔ B).** The model and its dimensions are
+pinned to the data volume, so a plain env edit is refused at boot. On **v0.9.12 or newer** the
+supported path is a one-shot rebuild: back up (step 2 above), edit the embedding block in
+`cortex.env`, then start the server **once** with two extra flags,
+`-e CORTEX_EMBEDDING_ALLOW_REPIN=1 -e CORTEX_EMBEDDING_REBUILD_VECTORS=1`, and afterwards run
+`POST /v1/admin/index-audit` with `{"scope":"<scope>","repair":true,"vectors":true}` for each
+scope to refill the vectors (each memory is re-embedded, which costs OpenAI calls under
+Option B). Restart without the two flags when done. On **older images** there is no rebuild:
+export what you need, start a fresh data volume with the new option, and re-ingest.
+
 > **Downgrades are not always possible** — newer versions may add on-disk structures older
 > servers can't open (they fail closed, without harming data). Always back up before upgrading.
 
@@ -860,13 +927,14 @@ Connectors: `python -m pip install --upgrade cortexdb-connectors`.
 |---|---|
 | `curl localhost:3141` hangs | Use `127.0.0.1` instead (Docker Desktop IPv6 proxy wedge). Restart Docker to clear. |
 | `401 Unauthorized` | You sent **neither** auth header. Add `Authorization: Bearer noauth-local` and `X-Cortex-Actor: user:local` (either alone works locally, but send both). |
-| Health check fails / container restarting | `docker logs cortexdb` — usually a bad env value or Ollama not reachable. |
+| Health check fails / container restarting | `docker logs cortexdb` — usually a bad env value, no embedding block activated (v0.9.10+ refuses to boot), or (Option A) Ollama not reachable. |
 | Recall returns nothing right after a write | Add `?wait=indexed` to the write, or wait a moment before recall. |
 | `/v1/answer` errors or returns empty | Missing/invalid OpenAI key, or a `429` rate limit. Check the LLM `*_API_KEY` values; lower `CORTEX_LLM_MAX_IN_FLIGHT` on 429s. |
 | Image/audio ingestion produces no text | Missing/invalid OpenAI key in `cortex.env`. Documents (Tika) don't need one. |
-| Embeddings fail but LLM works (or vice-versa) | They're separate providers now — embeddings = Ollama (`nomic-embed-text`), LLM = OpenAI. Check the one that's failing. |
+| Embeddings fail but LLM works (or vice-versa) | They're separate lanes — embeddings = Ollama (Option A) or OpenAI `text-embedding-3-small` (Option B); LLM = OpenAI. Check the lane that's failing: for B, `CORTEX_EMBEDDING_API_KEY` must be a real key; for A, see the next row. |
 | `413` on blob upload | File exceeds the 32 MiB blob cap. Split or shrink it. |
-| Ollama errors / embeddings fail | Confirm `docker exec ollama ollama list` shows `nomic-embed-text` (plus `qwen2.5:14b-instruct` only if you use the local-LLM fallback); re-pull if missing. |
+| Ollama errors / embeddings fail (Option A) | Confirm `docker exec ollama ollama list` shows `nomic-embed-text` (plus `qwen2.5:14b-instruct` only if you use the local-LLM fallback); re-pull if missing. |
+| Boot log says the embedding model/dims don't match the data volume | You changed embedding option after the first write. Either go back to the original option, or do the vector rebuild in §12. |
 | Enrichment on but no augmented facts | Needs `CORTEX_ENRICHMENT_MODEL` **and** `CORTEX_ENRICHMENT_URL` + `CORTEX_ENRICHMENT_API_KEY` (§9b). Boot log `fact_augmentation=false` / "no endpoint-compatible API key" means the URL/key are missing. |
 | `/v1/code/*` returns `503 CODE_PLANE_DISABLED` | Plane off — uncomment `CORTEX_CODE_PLANE=1` and recreate (§9a). |
 | `/v1/code/repos` register fails / can't find path | `path` must be the repo's mount point **inside** the container (e.g. `/repos/shop` from `-v /host/repo:/repos/shop`), not the host path. |
@@ -919,14 +987,14 @@ docker logs -f cortexdb
 # Health
 curl -s http://127.0.0.1:3141/v1/health
 
-# Stop / start everything
+# Stop / start everything (drop `ollama` if you chose embedding Option B)
 docker stop cortexdb tika ollama
 docker start ollama tika cortexdb
 
 # Full teardown (KEEPS data volume)
 docker rm -f cortexdb tika ollama
 
-# Nuke data too (irreversible)
+# Nuke data too (irreversible; ollama-data only exists with Option A)
 docker volume rm cortexdb-data-unified ollama-data
 ```
 

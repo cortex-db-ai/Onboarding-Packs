@@ -21,10 +21,25 @@ Keep the two content files **together** — the guide references the env templat
 ## Prerequisites
 
 - **Docker** (Docker Desktop or Engine) running.
-- An **OpenAI API key** — powers the LLM (answers/reasoning) and image/audio ingestion.
-  *(Optional if you use the fully-local fallback in the guide, where answer quality is lower.)*
+- An **OpenAI API key** — powers the LLM (answers/reasoning), image/audio ingestion, and
+  optionally the embeddings. *(Optional only if you use the fully-local fallback in the guide,
+  where answer quality is lower.)*
 - **Python 3.11+** — only needed for the connectors, SDK, or CLIs (not for the core server).
-- ~6 GB free disk for the container images + the local embedding model.
+- Free disk: ~6 GB if embeddings run locally (Ollama image + model), ~2 GB if they run on the
+  OpenAI API.
+
+## One decision to make first: where embeddings run
+
+Every stored memory is turned into a vector. You choose **once, before the first write**
+(the choice is pinned to the data volume), between two equally supported options:
+
+| | **Option A — local Ollama** | **Option B — OpenAI API** |
+|---|---|---|
+| What runs | One extra container + a 275 MB model on your machine | Nothing extra; same OpenAI key as the LLM |
+| Cost / privacy | Free per call; text never leaves the box | Fractions of a cent per 1k tokens; text is sent to OpenAI |
+| **Pick it if** | You want zero per-call cost or on-box vectors, and the machine can spare CPU/RAM | **Your machine has modest hardware** (laptop, no GPU, limited RAM/disk), or you want fewer moving parts |
+
+The guide's §2 walks through both; the env template has a commented block for each.
 
 ## Quick start (do it yourself)
 
@@ -32,9 +47,10 @@ Open **`CORTEXDB_SETUP_GUIDE.md`** and follow it top to bottom. The short path t
 instance is §1–§6:
 
 1. Create the Docker network
-2. Start Ollama + pull the embedding model
+2. Choose embeddings: **A** start Ollama + pull the model, or **B** nothing to start (OpenAI API)
 3. Start Tika
-4. `cp cortex.example.env cortex.env` and paste in your OpenAI key
+4. `cp cortex.example.env cortex.env`, uncomment the embedding block for A **or** B, paste in
+   your OpenAI key
 5. Start the CortexDB container
 6. Health check + a test write/read
 
@@ -48,17 +64,21 @@ put both files where the agent can read them and give it this prompt:
 
 ```text
 Follow CORTEXDB_SETUP_GUIDE.md to stand up CortexDB locally, step by step.
-Docker is running. When you reach the env step, create cortex.env from
-cortex.example.env but STOP and ask me to paste the OpenAI key myself — do not put
-it in chat. Same for any connector tokens. Run each section, verify with the checks
-in the guide, and tell me if anything fails.
+Docker is running. At section 2, ask me which embedding option I want (A: local
+Ollama, or B: OpenAI API) before continuing; if I am unsure, recommend B on a
+laptop or any machine without a GPU. When you reach the env step, create
+cortex.env from cortex.example.env, uncomment the embedding block for my choice,
+but STOP and ask me to paste the OpenAI key myself — do not put it in chat. Same
+for any connector tokens. Run each section, verify with the checks in the guide,
+and tell me if anything fails.
 ```
 
 Works with any file-aware coding agent — Claude Code, Codex, Cursor, and others. In Claude
 Code you can point at the file with `@CORTEXDB_SETUP_GUIDE.md`.
 
-**The agent handles everything except the secrets** — you paste the OpenAI key and any
-connector tokens yourself; the agent should never print or commit them.
+**The agent handles everything except the secrets and the one choice** — you pick the
+embedding option and paste the OpenAI key and any connector tokens yourself; the agent should
+never print or commit them.
 
 ## Security
 
