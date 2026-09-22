@@ -47,7 +47,11 @@ Four pieces on one Docker network (`cortexnet`):
 | **connectors** | `cortexdb-connectors` — pulls data from Slack/Jira/GitHub/Notion/etc. | Python on the host |
 
 **Model split** (the recommended trial config):
-- **LLM** — answer/reasoning/verifier run on **OpenAI** (`gpt-4o`) for the best output quality.
+- **Answers** — **OpenAI `gpt-5.6-terra`**, the best quality per dollar (about 2 to 4 cents per answer).
+  `gpt-5.6-luna` is the budget option (about 0.2 to 0.4 cents); `gpt-5.6-sol` or `gpt-6-astra` the
+  premium options (4 to 7 or 11 to 18 cents) where answer quality is the product.
+- **Entity extraction and enrichment** — OpenAI **`gpt-4o-mini`**, the cheapest reliable extraction
+  model (about $0.40 per 1,000 events). The verifier stays on `gpt-4o`.
 - **Embeddings** — **your choice, made once in [§2](#2-choose-where-embeddings-run)**. Both options
   are fully supported and behave identically from the API's point of view:
   - **Option A — local Ollama** (`nomic-embed-text`): free per call, vectors never leave the box;
@@ -60,9 +64,26 @@ Images/audio/video ingestion also calls **OpenAI** (vision + Whisper); documents
 So a single OpenAI key powers the LLM **and** media, and with Option B the embeddings too.
 
 > **Zero-cost / fully-offline option:** with embedding Option A you can run the LLM locally on
-> Ollama too (`qwen2.5:14b-instruct`) with no OpenAI key — answer quality is below gpt-4o, and
+> Ollama too (`qwen2.5:14b-instruct`) with no OpenAI key — answer quality is below gpt-5.6-terra, and
 > the 14B model (~9 GB) realistically needs a GPU. The env template includes this fallback
 > block, commented out.
+
+**What it costs** (OpenAI list prices, September 2026). Question volume drives the cost, not corpus
+size:
+
+| Item | Cost |
+|---|---|
+| Load and enrich 10,000 events (one time) | about $4 |
+| Each additional 1,000 events | about $0.40 |
+| Each answered question, Terra | $0.02 to $0.04 |
+| Each answered question, Luna | $0.002 to $0.004 |
+| Each search without a generated answer | under $0.001 |
+| 1,000 / 10,000 / 100,000 answers a month, Terra | $22 to $40 / $220 to $400 / $2,200 to $4,000 |
+
+Assumes events of about 150 tokens and about 10,000 input tokens per answer; the answer range covers
+reasoning tokens, which OpenAI bills as output. The built-in usage dashboard (v0.9.12+) reports actual
+tokens and spend per role; `cortex.example.env` sets `CORTEX_MODEL_PRICES` so it prices the GPT-5.6
+models correctly. Full detail: [Cost Planning](https://cortexdb.ai/docs/operations/cost-planning).
 
 **Optional features you can turn on later** (off by default; each is one env toggle — see
 [§9](#9-optional-features-code-plane--enrichment)):
@@ -711,9 +732,13 @@ all of these in `cortex.env`, then run §9.0:
 CORTEX_ENRICHMENT_MODEL=gpt-4o-mini
 CORTEX_ENRICHMENT_URL=https://api.openai.com/v1
 CORTEX_ENRICHMENT_API_KEY=<YOUR_OPENAI_API_KEY>
-CORTEX_ENRICHMENT_DELAY_SECONDS=5     # seconds after a write before enriching
-CORTEX_ENRICHMENT_CONCURRENCY=2       # parallel enrichment jobs
+CORTEX_ENRICHMENT_DELAY_SECONDS=5
+CORTEX_ENRICHMENT_CONCURRENCY=2
 ```
+
+`DELAY_SECONDS` is how long after a write enrichment waits; `CONCURRENCY` is parallel enrichment jobs.
+Keep the values bare in the env file (Docker's `--env-file` keeps a trailing `# comment` as part of the
+value).
 
 On boot, success looks like:
 `Enrichment LLM router enabled for fact augmentation model=gpt-4o-mini` and
@@ -722,7 +747,7 @@ On boot, success looks like:
 disabled` — that means the URL/key are missing.
 
 > **Cost/latency:** enrichment calls the LLM for every ingested item, so it uses OpenAI quota
-> and adds latency. On the fully-local Qwen fallback it's slow on CPU-only hardware — use a
+> and adds latency: about $0.40 per 1,000 events with `gpt-4o-mini`, about $4 for 10,000. On the fully-local Qwen fallback it's slow on CPU-only hardware — use a
 > GPU or keep enrichment off there.
 
 **Verify:** write a fact-rich sentence, wait ~20s (the deferred delay + a scheduler tick),
