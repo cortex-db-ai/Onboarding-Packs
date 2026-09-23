@@ -48,8 +48,10 @@ Four pieces on one Docker network (`cortexnet`):
 
 **Model split** (the recommended trial config):
 - **Answers** — **OpenAI `gpt-5.6-terra`**, the best quality per dollar (about 2 to 4 cents per answer).
-  `gpt-5.6-luna` is the budget option (about 0.2 to 0.4 cents); `gpt-5.6-sol` or `gpt-6-astra` the
-  premium options (4 to 7 or 11 to 18 cents) where answer quality is the product.
+  `gpt-5.6-luna` is the budget option (about 0.2 to 0.4 cents); `gpt-5.6-sol` the premium option (4 to
+  7 cents) where answer quality is the product. `gpt-6-astra` (11 to 18 cents) does not work yet: CortexDB
+  sends `max_tokens`, which Astra rejects, so every answer fails. The model is set per deployment with
+  `CORTEX_ANSWER_MODEL`; a per-request `answer_model` is accepted but not applied.
 - **Entity extraction and enrichment** — OpenAI **`gpt-4o-mini`**, the cheapest reliable extraction
   model (about $0.40 per 1,000 events). The verifier stays on `gpt-4o`.
 - **Embeddings** — **your choice, made once in [§2](#2-choose-where-embeddings-run)**. Both options
