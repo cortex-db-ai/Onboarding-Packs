@@ -41,6 +41,13 @@ Every stored memory is turned into a vector. You choose **once, before the first
 
 The guide's §2 walks through both; the env template has a commented block for each.
 
+## What it costs
+
+For a corpus of about 10,000 events, loading and enriching everything costs about **$4 one time**, and
+each answered question costs about **2 to 4 cents** on the recommended model (`gpt-5.6-terra`). At 10,000
+questions a month that is roughly $220 to $400 a month in LLM spend; searches without a generated answer
+cost almost nothing. Question volume drives the cost, not corpus size. The guide's §0 has the full table.
+
 ## Quick start (do it yourself)
 
 Open **`CORTEXDB_SETUP_GUIDE.md`** and follow it top to bottom. The short path to a working
