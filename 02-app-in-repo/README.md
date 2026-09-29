@@ -27,3 +27,7 @@ Do not print tokens. Dual-write only — do not replace my existing DB.
 - **Agents** that can edit a repo and run shell checks.
 
 Not for standing up the CortexDB server itself (use `01-self-host/`) or attaching chat/IDE harnesses only (use `03-harness-attach/`).
+
+Worked API examples for every call the onboarding makes — store, recall, answer, layer
+reads, erasure, in REST/Python/TypeScript — live in [`../examples/`](../examples/).
+Never invent endpoints beyond those.

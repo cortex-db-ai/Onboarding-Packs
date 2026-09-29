@@ -26,3 +26,6 @@ Point Claude Code, Claude Desktop, Cursor, or Grok Bot at a **working** CortexDB
 - Prefer shared brain; never mint over a working token.
 
 For app dual-write into a product repo, use `02-app-in-repo/` instead.
+
+To sanity-check a harness's brain after wiring it, use the smoke patterns in
+[`../examples/`](../examples/) — one store + one recall with the harness's own `.env`.

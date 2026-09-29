@@ -13,7 +13,8 @@ body:
     attributes:
       label: Which pack?
       options:
-        - 00-cloud-trial
+        - 00-cloud
+        - examples
         - 01-self-host
         - 02-app-in-repo
         - 03-harness-attach

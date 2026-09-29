@@ -107,6 +107,10 @@ never print or commit them.
 
 See the guide for details, verification steps, and troubleshooting.
 
+Once your container answers on `:3141`, the API calls are identical to the cloud —
+copy-paste patterns (store / recall / answer / erase, curl + Python + TypeScript) are
+in [`../examples/`](../examples/). Use `http://localhost:3141` as the URL.
+
 ---
 
 *Targets `cortexdb/cortexdb:v0.9.8`. Newer images ship often — the guide's Upgrading

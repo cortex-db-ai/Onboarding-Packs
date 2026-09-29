@@ -12,11 +12,12 @@ Official onboarding docs for CortexDB. **One repo, clear paths.** Send this whol
 
 | Priority | Who you are | What to say / do | Open |
 |---|---|---|---|
-| **1 — top** | **Human** on **cloud / free trial** (or you already have hosted keys) | Get keys → smoke write/recall yourself → then build an app with the same `.env` | [`00-cloud-trial/`](00-cloud-trial/) → `CLOUD-TRIAL.md` |
+| **1 — top** | **Human** on **cloud hosting** — free trial, existing keys, or a managed dedicated instance | Get keys → smoke write/recall yourself → then build an app with the same `.env` | [`00-cloud/`](00-cloud/) → `CLOUD.md` |
 | **2** | **Human** who wants **Docker self-host** | Local container trial | [`01-self-host/`](01-self-host/) → `CORTEXDB_SETUP_GUIDE.md` |
 | **3** | **Agentic developer** building a **new** app | *“Build my app with CortexDB”* (prefer shared cloud `.env` from path 1) | [`02-app-in-repo/APP-ONBOARDING.md`](02-app-in-repo/APP-ONBOARDING.md) |
 | **4** | **Agentic development** on an **existing** repo | *“Implement CortexDB on my current repo”* | Same `APP-ONBOARDING.md` + `PROJECT_DIR` |
 | **5** | Hook tools to a **personal / shared brain** | Attach Claude Code, Claude Desktop, Cursor, or Grok Bot | [`03-harness-attach/`](03-harness-attach/) |
+| **any** | Anyone who wants **copy-paste API examples** | Store / recall / answer / layer reads / erase — curl + Python + TypeScript | [`examples/`](examples/) |
 
 Agents: also read [`AGENTS.md`](AGENTS.md).
 
@@ -24,12 +25,12 @@ Agents: also read [`AGENTS.md`](AGENTS.md).
 
 ---
 
-## 1. Cloud / free trial (default playground)
+## 1. Cloud hosting — free trial or managed instance (default playground)
 
-Hosted at `https://api-v1.cortexdb.ai`.
+Hosted free trial at `https://api-v1.cortexdb.ai`; pilot/team deployments run on dedicated managed instances (`https://<tenant>.cortexdb.ai`).
 
-1. Open **[`00-cloud-trial/`](00-cloud-trial/)**.
-2. Follow **`CLOUD-TRIAL.md`**: anonymous signup (7-day free tier) **or** paste existing cloud keys.
+1. Open **[`00-cloud/`](00-cloud/)**.
+2. Follow **`CLOUD.md`**: Mode A anonymous signup (7-day free tier), Mode B managed instance keys, **or** paste existing cloud keys.
 3. Run whoami + smoke write/answer yourself.
 4. Keep `.env` gitignored. Then jump to [`02-app-in-repo/`](02-app-in-repo/) with `SHARE_BRAIN=true`.
 
@@ -49,9 +50,9 @@ Open [`01-self-host/`](01-self-host/) → `CORTEXDB_SETUP_GUIDE.md`.
 
 [`02-app-in-repo/APP-ONBOARDING.md`](02-app-in-repo/APP-ONBOARDING.md)
 
-> Build my app with CortexDB. Use `02-app-in-repo/`. Prefer `00-cloud-trial/.env` as the shared brain.
+> Build my app with CortexDB. Use `02-app-in-repo/`. Prefer `00-cloud/.env` as the shared brain.
 
-> Implement CortexDB on my current repo. Pack = `02-app-in-repo/`. `PROJECT_DIR` = this repository. `SHARE_BRAIN=true` if I already have cloud keys.
+> Implement CortexDB on my current repo. Pack = `02-app-in-repo/`. `PROJECT_DIR` = this repository. `SHARE_BRAIN=true` if I already have cloud keys. Worked API examples: `examples/`.
 
 ---
 
@@ -71,11 +72,15 @@ Onboarding-Packs/
   AGENTS.md
   CONTRIBUTING.md     ← how to file issues / send PRs
   SECURITY.md         ← private vulnerability reporting
-  00-cloud-trial/     ← hosted free trial / cloud keys (default human start)
+  00-cloud/           ← cloud hosting: free trial OR managed dedicated instance (default human start)
   01-self-host/       ← Docker local trial
   02-app-in-repo/     ← new app or existing repo (uses keys from 00 or 01)
   03-harness-attach/  ← wire IDE/chat to a brain
+  examples/           ← copy-paste store/recall/answer examples (curl, Python, TypeScript) from cortexdb.ai/docs
 ```
+
+> Pilot customers on managed instances receive their onboarding pack **directly and
+> privately** — those packs are intentionally not published in this public repo.
 
 ---
 
