@@ -6,14 +6,15 @@ You are a coding agent. Read the human README for routing, then execute exactly 
 
 ---
 
-## Path 1 — Cloud / free trial (default brain)
+## Path 1 — Cloud hosting: free trial or managed instance (default brain)
 
-Trigger: *free trial*, *cloud keys*, *hosted*, *api-v1*, *get me a brain*, *try CortexDB*.
+Trigger: *free trial*, *cloud keys*, *hosted*, *managed instance*, *api-v1*, *get me a brain*, *try CortexDB*.
 
-1. Execute `$PACK_ROOT/00-cloud-trial/CLOUD-TRIAL.md`.
+1. Execute `$PACK_ROOT/00-cloud/CLOUD.md` (Mode A = free trial signup, Mode B = managed dedicated instance keys).
 2. Prefer existing `.env` (mode B). Only signup (mode A) if no working credentials.
 3. Confirm whoami + smoke write/answer. Report actor/scope/expiry only — never the bearer.
-4. If they also asked to build an app, continue to Path 3/4 with `SHARE_BRAIN=true` and `CORTEX_ENV_FILE=$PACK_ROOT/00-cloud-trial/.env`.
+4. If they also asked to build an app, continue to Path 3/4 with `SHARE_BRAIN=true` and `CORTEX_ENV_FILE=$PACK_ROOT/00-cloud/.env`.
+5. Copy-paste API patterns live in `$PACK_ROOT/examples/` — point the user there instead of improvising call shapes.
 
 ---
 
@@ -25,7 +26,7 @@ Trigger: *free trial*, *cloud keys*, *hosted*, *api-v1*, *get me a brain*, *try 
 
 ## Path 3 — New app (“Build my app with CortexDB”)
 
-1. Prefer Path 1 brain first (`00-cloud-trial/.env`).
+1. Prefer Path 1 brain first (`00-cloud/.env`).
 2. Execute `$PACK_ROOT/02-app-in-repo/APP-ONBOARDING.md` with `SHARE_BRAIN=true` when `.env` exists.
 3. Dual-write alongside any primary DB. Never invent `/v1/remember`.
 4. Standing rule: recall → act → write.
