@@ -4,7 +4,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-Official onboarding docs for CortexDB. **One repo, clear paths.** Send this whole repo (or a folder deep-link). Do not fork into three repos — that goes stale.
+Official onboarding docs for CortexDB. **One repo, clear paths.** 
 
 ---
 
