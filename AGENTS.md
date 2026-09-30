@@ -18,6 +18,18 @@ Trigger: *free trial*, *cloud keys*, *hosted*, *managed instance*, *api-v1*, *ge
 
 ---
 
+## Path 1.5 — Kickstart pack (enterprise onboarding, brief path)
+
+Trigger: *kickstart*, *helper agent*, *onboard our team*, *what do we need to define*,
+*what will it cost*.
+
+1. Execute `$PACK_ROOT/04-kickstart/README.md` → `SETUP.md` → `USE-CASES.md` → `COSTS.md` in order.
+2. `SETUP.md` contains the five decisions (hosting, scope tree, embeddings, enrichment, answer lane) and a 2-minute smoke. Do not skip the scope-tree decision.
+3. Match their workload to the use cases in `USE-CASES.md`; link the official doc pages for depth instead of improvising.
+4. Cost questions: quote `COSTS.md` figures with the [modeled] tags intact; direct measurement goes through `GET /v1/admin/usage`.
+
+---
+
 ## Path 2 — Docker self-host
 
 `$PACK_ROOT/01-self-host/CORTEXDB_SETUP_GUIDE.md`. Only when they asked for local Docker.

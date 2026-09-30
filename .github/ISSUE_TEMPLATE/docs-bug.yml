@@ -18,6 +18,7 @@ body:
         - 01-self-host
         - 02-app-in-repo
         - 03-harness-attach
+        - 04-kickstart
         - README.md / AGENTS.md (routing)
         - Not sure
     validations:
