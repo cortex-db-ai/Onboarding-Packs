@@ -13,6 +13,7 @@ Official onboarding docs for CortexDB. **One repo, clear paths.** Send this whol
 | Priority | Who you are | What to say / do | Open |
 |---|---|---|---|
 | **1 — top** | **Human** on **cloud hosting** — free trial, existing keys, or a managed dedicated instance | Get keys → smoke write/recall yourself → then build an app with the same `.env` | [`00-cloud/`](00-cloud/) → `CLOUD.md` |
+| **1.5** | **Enterprise team / agent with real data** wanting the brief path: define setup, then basic use cases, then costs | Read the kickstart pack top-to-bottom | [`04-kickstart/`](04-kickstart/) |
 | **2** | **Human** who wants **Docker self-host** | Local container trial | [`01-self-host/`](01-self-host/) → `CORTEXDB_SETUP_GUIDE.md` |
 | **3** | **Agentic developer** building a **new** app | *“Build my app with CortexDB”* (prefer shared cloud `.env` from path 1) | [`02-app-in-repo/APP-ONBOARDING.md`](02-app-in-repo/APP-ONBOARDING.md) |
 | **4** | **Agentic development** on an **existing** repo | *“Implement CortexDB on my current repo”* | Same `APP-ONBOARDING.md` + `PROJECT_DIR` |
@@ -35,6 +36,15 @@ Hosted free trial at `https://api-v1.cortexdb.ai`; pilot/team deployments run on
 4. Keep `.env` gitignored. Then jump to [`02-app-in-repo/`](02-app-in-repo/) with `SHARE_BRAIN=true`.
 
 Docs cold-start: https://cortexdb.ai/docs/sdks/rest-api
+
+---
+
+## 1.5 Kickstart pack — the Helper-Agent docs (brief path)
+
+Serious team with good enterprise data: open [`04-kickstart/`](04-kickstart/) and read
+`README.md` → `SETUP.md` (the five decisions + a 2-minute proof) → `USE-CASES.md`
+(the basic patterns) → `COSTS.md` (what it costs to run). Agent-friendly by design —
+hand the whole folder to a coding agent.
 
 ---
 
@@ -74,6 +84,7 @@ Onboarding-Packs/
   01-self-host/       ← Docker local trial
   02-app-in-repo/     ← new app or existing repo (uses keys from 00 or 01)
   03-harness-attach/  ← wire IDE/chat to a brain
+  04-kickstart/       ← Helper-Agent pack: setup decisions, basic use cases, cost guide
   examples/           ← copy-paste store/recall/answer examples (curl, Python, TypeScript) from cortexdb.ai/docs
 ```
 

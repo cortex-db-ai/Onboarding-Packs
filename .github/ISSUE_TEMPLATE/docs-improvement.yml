@@ -13,6 +13,7 @@ body:
         - 01-self-host
         - 02-app-in-repo
         - 03-harness-attach
+        - 04-kickstart
         - README.md / AGENTS.md (routing)
         - New pack / not covered yet
     validations:
