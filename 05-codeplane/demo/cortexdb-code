@@ -239,11 +239,14 @@ cmd_eject() {
     || curl -fsS -m 120 "${HDR[@]}" "${CORTEXDB_URL}/v1/code/export-index?repo=${name}" > "${out}/${name}.index-bundle" \
     || echo "    index export unavailable"
   log "eject: exporting call graph slice (json + dot)"
+  root="$(curl -fsS -m 15 "${HDR[@]}" "${CORTEXDB_URL}/v1/code/symbol/search?repo=${name}&prefix=&limit=1" 2>/dev/null \
+    | python3 -c "import json,sys; m=json.load(sys.stdin).get('matches',[]); print(m[0]['name'] if m else 'main')" 2>/dev/null || echo main)"
   for fmt in json dot; do
     curl -fsS -m 60 -X POST "${HDR[@]}" "${CORTEXDB_URL}/v1/code/graph/query" \
-      -d "{\"repo\":\"${name}\",\"roots\":[],\"predicates\":[\"calls\"],\"output\":\"${fmt}\"}" \
+      -d "{\"repo\":\"${name}\",\"roots\":[\"${root}\"],\"predicates\":[\"calls\"],\"direction\":\"both\",\"depth\":2,\"output\":\"${fmt}\"}" \
       > "${out}/graph.${fmt}" 2>/dev/null || true
   done
+  [ -s "${out}/graph.dot" ] && echo "    graph slice around '${root}' exported" || true
   log "eject: removing repo '${name}' from the server (purges its bytes)"
   curl -fsS -m 60 -X DELETE "${HDR[@]}" "${CORTEXDB_URL}/v1/code/repos/${name}" \
     | python3 -c "import json,sys; d=json.load(sys.stdin); p=d.get('purge',{}); print('    removed=%s bytes_freed=%s' % (d.get('removed'), p.get('bytes_freed')))" 2>/dev/null \
