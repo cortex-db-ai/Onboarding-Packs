@@ -1,0 +1,6 @@
+.env
+.mcp.json
+.signup.json
+*.pem
+sync-state-*.json
+cortexdb-eject-*/

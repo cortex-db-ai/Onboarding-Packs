@@ -45,9 +45,21 @@ Trigger: *free trial*, *cloud keys*, *hosted*, *api-v1*, *get me a brain*, *try 
 
 `$PACK_ROOT/03-harness-attach/` — pick the pack for the tool:
 
-- **Claude Code:** `ClaudeCode/` — config **`~/.claude.json` → `mcpServers`** (not `~/.claude/mcp.json`). Label `harness:claude-code`.
+- **Claude Code:** `ClaudeCode/` — prefer `claude mcp add --transport stdio cortexdb -- cortexdb-mcp` (writes **`~/.claude.json` → `mcpServers`**, not `~/.claude/mcp.json`). Pin `cortexdb-mcp>=0.7.5`. Label `harness:claude-code`.
 - **Claude Desktop:** `ClaudeDesktop/` — config **`~/Library/Application Support/Claude/claude_desktop_config.json`**. Prefer direct `/opt/homebrew/bin/cortexdb-mcp`. Label `harness:claude-desktop`. After edit: Cmd+Q, reopen, new chat, enable connector.
 - **Cursor / Grok Bot:** `Cursor/`, `Grokbot/`.
+
+---
+
+## Path 6 — Codeplane (code intelligence for coding agents)
+
+`$PACK_ROOT/05-codeplane/` — index a repository into the code plane and wire the
+coding agent to it:
+
+- Execute `$PACK_ROOT/05-codeplane/CODEPLANE-ONBOARDING.md` with `PROJECT_DIR` set.
+- Server needs `CORTEX_CODE_PLANE=1`; no embedding key for structural retrieval.
+- `cortexdb-mcp>=0.8.0` for the four code tools. Label `harness:claude-code`.
+- Lifecycle CLI: `$PACK_ROOT/05-codeplane/demo/cortexdb-code` (init / add / status / doctor / eject).
 
 ---
 

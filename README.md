@@ -17,6 +17,7 @@ Official onboarding docs for CortexDB. **One repo, clear paths.** Send this whol
 | **3** | **Agentic developer** building a **new** app | *“Build my app with CortexDB”* (prefer shared cloud `.env` from path 1) | [`02-app-in-repo/APP-ONBOARDING.md`](02-app-in-repo/APP-ONBOARDING.md) |
 | **4** | **Agentic development** on an **existing** repo | *“Implement CortexDB on my current repo”* | Same `APP-ONBOARDING.md` + `PROJECT_DIR` |
 | **5** | Hook tools to a **personal / shared brain** | Attach Claude Code, Claude Desktop, Cursor, or Grok Bot | [`03-harness-attach/`](03-harness-attach/) |
+| **6** | **Coding agent** on a **real repository** (code intelligence + team memory) | *“Set up Codeplane on this repo”* — index it, wire Claude Code, measure | [`05-codeplane/`](05-codeplane/) → `CODEPLANE-ONBOARDING.md` |
 
 Agents: also read [`AGENTS.md`](AGENTS.md).
 
