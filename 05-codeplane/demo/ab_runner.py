@@ -31,9 +31,11 @@ from pathlib import Path
 
 
 def reset_worktree(path: Path) -> None:
-    if (path / ".git").exists() or (path / ".git" or True):
-        subprocess.run(["git", "-C", str(path), "reset", "--hard", "-q"], check=False)
-        subprocess.run(["git", "-C", str(path), "clean", "-fdq"], check=False)
+    """Restore pristine tracked state WITHOUT deleting untracked wiring
+    (.mcp.json, CLAUDE.md, .claude/) - those carry the arm's treatment."""
+    subprocess.run(["git", "-C", str(path), "reset", "--hard", "-q"], check=False)
+    subprocess.run(["git", "-C", str(path), "clean", "-fdq",
+                    "-e", ".mcp.json", "-e", "CLAUDE.md", "-e", ".claude"], check=False)
 
 
 def parse_stream(stream_path: Path) -> dict:
@@ -82,10 +84,21 @@ def run_one(task_id, arm, workdir, prompt, model, run_idx, outdir, extra_env=Non
            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"}
     if extra_env:
         env.update(extra_env)
+    # Hermetic MCP: arm B loads ONLY its project .mcp.json; arm A gets an
+    # empty config so a global user-level MCP of the same name can never
+    # leak into either arm.
+    mcp_flags = ["--strict-mcp-config"]
+    if (workdir / ".mcp.json").exists():
+        mcp_flags += ["--mcp-config", str(workdir / ".mcp.json")]
+    else:
+        empty = run_dir / "empty-mcp.json"
+        if not empty.exists():
+            empty.write_text('{"mcpServers": {}}')
+        mcp_flags += ["--mcp-config", str(empty)]
     cmd = ["claude", "-p", prompt, "--output-format", "stream-json", "--verbose",
            "--model", model,
            "--allowedTools", "Bash", "Edit", "Write", "Read", "Glob", "Grep",
-           "NotebookEdit", "mcp__cortexdb"]
+           "NotebookEdit", "mcp__cortexdb"] + mcp_flags
     t0 = time.time()
     with stream_path.open("w") as fh:
         proc = subprocess.run(cmd, cwd=str(workdir), env=env, stdout=fh,
